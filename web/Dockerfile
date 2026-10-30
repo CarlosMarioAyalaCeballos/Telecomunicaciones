@@ -14,4 +14,5 @@ RUN mkdir -p /app/uploads
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python init_db.py && gunicorn -w 3 -b 0.0.0.0:8000 --access-logfile - wsgi:app"]
+# PORT lo asigna Render (local: 8000). WEB_CONCURRENCY limita la memoria en planes pequeños.
+CMD ["sh", "-c", "python init_db.py && exec gunicorn -w ${WEB_CONCURRENCY:-2} -b 0.0.0.0:${PORT:-8000} --timeout 120 --access-logfile - wsgi:app"]

@@ -1,0 +1,30 @@
+# Blueprint de Render: https://render.com/docs/blueprint-spec
+# La base de datos está en Neon (gratis, sin vencimiento). Pegue su cadena de conexión en DATABASE_URL.
+services:
+  - type: web
+    name: activos-telecom
+    runtime: docker
+    plan: free
+    dockerfilePath: ./web/Dockerfile
+    dockerContext: ./web
+    healthCheckPath: /login
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false          # Render la pide al crear el servicio: cadena de conexión de Neon
+      - key: ADMIN_PASSWORD
+        sync: false          # contraseña del usuario admin (solo se usa al crear la BD)
+      - key: SECRET_KEY
+        generateValue: true  # Render genera una clave aleatoria
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: EMPRESA_NOMBRE
+        value: Empresa de Telecomunicaciones S.A.S.
+      - key: SEED_DEMO
+        value: "false"       # "true" para cargar equipos de ejemplo
+      - key: COOKIES_SEGURAS
+        value: "true"        # Render sirve todo por HTTPS
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: TZ
+        value: America/Bogota

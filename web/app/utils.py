@@ -56,3 +56,21 @@ def a_entero(valor):
     if numero < 0:
         raise ValueError("Los valores no pueden ser negativos")
     return numero
+
+
+def comprimir_imagen(stream, lado_max=1280):
+    """Valida y reduce una imagen subida. Devuelve (bytes, mime). Lanza ValueError si no es imagen."""
+    import io
+    from PIL import Image, ImageOps, UnidentifiedImageError
+    try:
+        img = ImageOps.exif_transpose(Image.open(stream))
+    except (UnidentifiedImageError, OSError):
+        raise ValueError("El archivo no es una imagen válida.")
+    img.thumbnail((lado_max, lado_max))
+    salida = io.BytesIO()
+    transparente = img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info)
+    if transparente:
+        img.save(salida, "PNG", optimize=True)
+        return salida.getvalue(), "image/png"
+    img.convert("RGB").save(salida, "JPEG", quality=85, optimize=True)
+    return salida.getvalue(), "image/jpeg"

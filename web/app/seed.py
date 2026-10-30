@@ -4,6 +4,7 @@ import time
 from datetime import date, timedelta
 from decimal import Decimal
 
+from flask import current_app
 from sqlalchemy.exc import OperationalError
 
 from . import db
@@ -59,10 +60,29 @@ def _categorias_computo():
         print("Categorías de cómputo creadas.")
 
 
+def _fotos_a_bd():
+    """Mueve a la BD las fotos que versiones anteriores guardaban en la carpeta uploads."""
+    carpeta = current_app.config["UPLOAD_FOLDER"]
+    movidas = 0
+    for equipo in Equipo.query.filter(Equipo.foto.is_not(None), Equipo.foto_datos.is_(None)):
+        ruta = os.path.join(carpeta, equipo.foto)
+        if os.path.exists(ruta):
+            with open(ruta, "rb") as f:
+                equipo.foto_datos = f.read()
+            equipo.foto_mime = "image/png" if equipo.foto.lower().endswith(".png") else "image/jpeg"
+            movidas += 1
+        else:
+            equipo.foto = None  # el archivo ya no existe
+    db.session.commit()
+    if movidas:
+        print(f"Migración: {movidas} foto(s) movidas a la base de datos.")
+
+
 def inicializar():
     _esperar_bd()
     db.create_all()
     _migrar()
+    _fotos_a_bd()
 
     if Usuario.query.count() == 0:
         admin = Usuario(username=os.getenv("ADMIN_USERNAME", "admin"), nombre="Administrador del sistema",

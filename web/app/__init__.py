@@ -6,17 +6,32 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
 
 
+def _url_base_datos():
+    url = os.getenv("DATABASE_URL", "sqlite:///activos.db")
+    # Algunos proveedores (Neon, Render, Heroku) entregan el esquema corto "postgres://"
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    return url
+
+
 def create_app():
     app = Flask(__name__)
+    # Detrás del proxy de Render: respeta el https original para cookies y redirecciones
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    cookies_seguras = os.getenv("COOKIES_SEGURAS", "false").lower() == "true"
     app.config.update(
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret"),
-        SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", "sqlite:///activos.db"),
+        SESSION_COOKIE_SECURE=cookies_seguras,
+        REMEMBER_COOKIE_SECURE=cookies_seguras,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SQLALCHEMY_DATABASE_URI=_url_base_datos(),
         SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
         UPLOAD_FOLDER=os.getenv("UPLOAD_FOLDER", os.path.join(os.getcwd(), "uploads")),
         MAX_CONTENT_LENGTH=5 * 1024 * 1024,

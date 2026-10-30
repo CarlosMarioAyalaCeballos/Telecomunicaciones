@@ -1,6 +1,5 @@
 """Generación de la hoja de vida del equipo en PDF (ReportLab)."""
 import io
-import os
 from datetime import datetime
 from decimal import Decimal
 from xml.sax.saxutils import escape
@@ -98,7 +97,7 @@ def _tabla(encabezados, filas, anchos, vacio):
     return t
 
 
-def generar_hoja_vida(equipo, empresa, carpeta_uploads, generado_por):
+def generar_hoja_vida(equipo, empresa, generado_por):
     buffer = io.BytesIO()
     generado = datetime.now()
 
@@ -121,15 +120,13 @@ def generar_hoja_vida(equipo, empresa, carpeta_uploads, generado_por):
                   Paragraph("HOJA DE VIDA DE ACTIVO FIJO", ESTILOS["titulo"]),
                   Paragraph(f"<b>{escape(equipo.codigo_activo)}</b> — {escape(equipo.nombre)}", ESTILOS["empresa"])]
     foto = None
-    if equipo.foto:
-        ruta = os.path.join(carpeta_uploads, equipo.foto)
-        if os.path.exists(ruta):
-            try:
-                ancho, alto = ImageReader(ruta).getSize()
-                escala = min(3.2 * cm / ancho, 3.2 * cm / alto)
-                foto = Image(ruta, width=ancho * escala, height=alto * escala)
-            except Exception:
-                foto = None
+    if equipo.foto_datos:
+        try:
+            ancho, alto = ImageReader(io.BytesIO(equipo.foto_datos)).getSize()
+            escala = min(3.2 * cm / ancho, 3.2 * cm / alto)
+            foto = Image(io.BytesIO(equipo.foto_datos), width=ancho * escala, height=alto * escala)
+        except Exception:
+            foto = None
     if foto:
         t = Table([[encabezado, foto]], colWidths=[ANCHO - 3.6 * cm, 3.6 * cm])
         t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("ALIGN", (1, 0), (1, 0), "RIGHT")]))

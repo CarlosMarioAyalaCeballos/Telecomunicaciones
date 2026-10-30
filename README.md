@@ -30,6 +30,25 @@ docker compose down -v              # detener y BORRAR la base de datos y fotos
 docker compose exec db pg_dump -U activos activos_telecom > respaldo.sql   # respaldo
 ```
 
+## Despliegue gratuito en Render + Neon
+
+La app corre en **Render** (plan gratuito, con el `Dockerfile`) y la base de datos en **Neon**
+(PostgreSQL gratuito sin vencimiento). Las fotos se guardan en la base de datos, así que no se
+pierden cuando Render reinicia el servidor.
+
+1. **Neon** (https://neon.tech): cree un proyecto y copie la *connection string*
+   (`postgresql://usuario:clave@ep-xxx.neon.tech/neondb?sslmode=require`).
+2. **Render** (https://render.com): *New → Blueprint*, conecte este repositorio de GitHub.
+   Render lee `render.yaml` y pide:
+   - `DATABASE_URL`: la cadena de Neon.
+   - `ADMIN_PASSWORD`: contraseña del usuario `admin`.
+3. *Apply*. En unos minutos la app queda en `https://activos-telecom.onrender.com` (o similar).
+   Cada `git push` a `main` la vuelve a desplegar.
+
+> En el plan gratuito el servidor se duerme tras 15 min sin visitas; la primera carga
+> después tarda cerca de un minuto. Para cargar datos de ejemplo, ponga `SEED_DEMO=true`
+> antes del primer despliegue.
+
 ## Funcionalidades
 
 - **Login** con sesiones seguras, contraseñas cifradas (hash) y protección CSRF.

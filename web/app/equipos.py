@@ -12,7 +12,7 @@ from . import db
 from .models import (CRITICIDADES, ESTADOS_EQUIPO, GRUPOS, TIPOS_MANTENIMIENTO, Categoria,
                      Equipo, Historial, Mantenimiento, Proveedor, Ubicacion)
 from .pdf import generar_hoja_vida
-from .utils import a_decimal, a_entero, a_fecha, admin_required, texto
+from .utils import a_decimal, a_entero, a_fecha, admin_required, comprimir_imagen, texto
 
 bp = Blueprint("equipos", __name__, url_prefix="/equipos")
 
@@ -121,18 +121,24 @@ def _guardar_foto(equipo):
     ext = archivo.filename.rsplit(".", 1)[-1].lower() if "." in archivo.filename else ""
     if ext not in EXTENSIONES_FOTO:
         raise ValueError(["La foto debe ser PNG o JPG."])
-    nombre = f"equipo_{equipo.id}_{uuid.uuid4().hex[:8]}.{ext}"
-    archivo.save(os.path.join(current_app.config["UPLOAD_FOLDER"], nombre))
+    try:
+        datos, mime = comprimir_imagen(archivo.stream)
+    except ValueError as e:
+        raise ValueError([str(e)])
     _borrar_foto(equipo)
-    equipo.foto = nombre
+    # El nombre cambia en cada carga para que el navegador no muestre la foto anterior en caché
+    extension = "png" if mime == "image/png" else "jpg"
+    equipo.foto = f"equipo_{equipo.id}_{uuid.uuid4().hex[:8]}.{extension}"
+    equipo.foto_datos, equipo.foto_mime = datos, mime
 
 
 def _borrar_foto(equipo):
     if equipo.foto:
+        # Fotos de versiones anteriores que aún estuvieran en disco
         ruta = os.path.join(current_app.config["UPLOAD_FOLDER"], equipo.foto)
         if os.path.exists(ruta):
             os.remove(ruta)
-        equipo.foto = None
+    equipo.foto = equipo.foto_datos = equipo.foto_mime = None
 
 
 def _registrar(equipo, accion, detalle):
@@ -305,8 +311,7 @@ def eliminar(equipo_id):
 @login_required
 def pdf(equipo_id):
     equipo = db.get_or_404(Equipo, equipo_id)
-    contenido = generar_hoja_vida(equipo, current_app.config["EMPRESA_NOMBRE"],
-                                  current_app.config["UPLOAD_FOLDER"], current_user.nombre)
+    contenido = generar_hoja_vida(equipo, current_app.config["EMPRESA_NOMBRE"], current_user.nombre)
     nombre = f"hoja_de_vida_{equipo.codigo_activo}.pdf"
     disposicion = "inline" if request.args.get("ver") else "attachment"
     return Response(contenido, mimetype="application/pdf",

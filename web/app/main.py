@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from flask import Blueprint, current_app, render_template, send_from_directory
+from flask import Blueprint, Response, abort, render_template
 from flask_login import login_required
 from sqlalchemy import func
 
@@ -59,4 +59,9 @@ def dashboard():
 @bp.route("/uploads/<path:filename>")
 @login_required
 def uploads(filename):
-    return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename)
+    equipo = Equipo.query.filter_by(foto=filename).first()
+    if equipo is None or not equipo.foto_datos:
+        abort(404)
+    # El nombre cambia con cada foto nueva, así que el navegador puede guardarla en caché
+    return Response(equipo.foto_datos, mimetype=equipo.foto_mime or "image/jpeg",
+                    headers={"Cache-Control": "private, max-age=604800"})

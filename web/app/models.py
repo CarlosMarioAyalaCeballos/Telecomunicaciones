@@ -134,6 +134,10 @@ class Equipo(db.Model):
     # Otros
     observaciones = db.Column(db.Text)
     foto = db.Column(db.String(200))
+    # La imagen se guarda en la BD para no perderla en hostings sin disco persistente (Render).
+    # deferred: solo se carga cuando se pide, no en cada consulta del inventario.
+    foto_datos = db.deferred(db.Column(db.LargeBinary))
+    foto_mime = db.Column(db.String(30))
     creado_en = db.Column(db.DateTime, nullable=False, default=datetime.now)
     actualizado_en = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
     creado_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id", ondelete="SET NULL"))
