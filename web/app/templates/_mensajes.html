@@ -1,0 +1,10 @@
+{% with mensajes = get_flashed_messages(with_categories=true) %}
+  {% for categoria, mensaje in mensajes %}
+    {% set cat = categoria if categoria != 'message' else 'info' %}
+    <div class="alert alert-{{ cat }} alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+      <i class="bi {{ {'success': 'bi-check-circle-fill', 'danger': 'bi-exclamation-octagon-fill', 'warning': 'bi-exclamation-triangle-fill'}.get(cat, 'bi-info-circle-fill') }}"></i>
+      <div>{{ mensaje }}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+  {% endfor %}
+{% endwith %}

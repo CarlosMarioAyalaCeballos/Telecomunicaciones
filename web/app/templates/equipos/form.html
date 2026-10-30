@@ -29,12 +29,15 @@
 {%- endmacro %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h4 mb-0">
-    {% if equipo %}<i class="bi bi-pencil-square"></i> Editar equipo <span class="text-muted">{{ equipo.codigo_activo }}</span>
-    {% else %}<i class="bi bi-plus-square"></i> Registrar nuevo equipo{% endif %}
-  </h1>
-  <a href="{{ url_for('equipos.detalle', equipo_id=equipo.id) if equipo else url_for('equipos.lista') }}" class="btn btn-outline-secondary">
+<div class="page-header">
+  <div>
+    <h1>
+      <span class="icono-titulo"><i class="bi {{ 'bi-pencil-square' if equipo else 'bi-plus-square' }}"></i></span>
+      {% if equipo %}Editar {{ equipo.codigo_activo }}{% else %}Registrar nuevo equipo{% endif %}
+    </h1>
+    <div class="subtitulo">Los campos marcados con <span class="text-danger">*</span> son obligatorios.</div>
+  </div>
+  <a href="{{ url_for('equipos.detalle', equipo_id=equipo.id) if equipo else url_for('equipos.lista') }}" class="btn btn-outline-secondary d-none d-sm-inline-block">
     <i class="bi bi-arrow-left"></i> Volver</a>
 </div>
 
@@ -146,7 +149,7 @@
       </div>
     </div>
   </div>
-  <div class="card-footer bg-white text-end">
+  <div class="card-footer acciones-fijas text-end">
     <a href="{{ url_for('equipos.detalle', equipo_id=equipo.id) if equipo else url_for('equipos.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
     <button class="btn btn-telecom"><i class="bi bi-save"></i> Guardar</button>
   </div>

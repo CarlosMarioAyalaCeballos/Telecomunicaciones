@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Hoja de vida {{ equipo.codigo_activo }}{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-  <div>
-    <a href="{{ url_for('equipos.lista', grupo=equipo.categoria.grupo) }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> {{ 'Cómputo y móviles' if equipo.es_computo else 'Telecomunicaciones' }}</a>
-    <h1 class="h4 mb-1 mt-1"><i class="bi bi-file-earmark-medical"></i> Hoja de vida — {{ equipo.codigo_activo }}</h1>
-    <div class="text-muted">{{ equipo.nombre }}
+<div class="hero-equipo">
+  <div class="hero-icono"><i class="bi {{ 'bi-laptop' if equipo.es_computo else 'bi-hdd-network' }}"></i></div>
+  <div class="flex-grow-1 min-w-0">
+    <a href="{{ url_for('equipos.lista', grupo=equipo.categoria.grupo) }}" class="volver"><i class="bi bi-arrow-left"></i> {{ 'Cómputo y móviles' if equipo.es_computo else 'Telecomunicaciones' }}</a>
+    <h1 class="mt-1">{{ equipo.codigo_activo }} <span class="fw-normal opacity-75">· {{ equipo.nombre }}</span></h1>
+    <div class="d-flex flex-wrap gap-1 mt-2">
       <span class="badge bg-{{ COLOR_ESTADO[equipo.estado] }}">{{ equipo.estado }}</span>
       <span class="badge bg-{{ COLOR_CRITICIDAD[equipo.criticidad] }}">Criticidad {{ equipo.criticidad }}</span>
       {% if equipo.garantia_hasta %}
@@ -14,14 +15,16 @@
     </div>
   </div>
   <div class="d-flex gap-2 flex-wrap">
-    <a href="{{ url_for('equipos.pdf', equipo_id=equipo.id, ver=1) }}" target="_blank" class="btn btn-outline-danger"><i class="bi bi-eye"></i> Ver PDF</a>
-    <a href="{{ url_for('equipos.pdf', equipo_id=equipo.id) }}" class="btn btn-danger"><i class="bi bi-file-earmark-pdf"></i> Descargar PDF</a>
+    <div class="btn-group">
+      <a href="{{ url_for('equipos.pdf', equipo_id=equipo.id) }}" class="btn btn-light"><i class="bi bi-file-earmark-pdf text-danger me-1"></i> Descargar PDF</a>
+      <a href="{{ url_for('equipos.pdf', equipo_id=equipo.id, ver=1) }}" target="_blank" class="btn btn-light" title="Ver PDF" aria-label="Ver PDF"><i class="bi bi-box-arrow-up-right"></i></a>
+    </div>
     {% if current_user.is_admin %}
-    <a href="{{ url_for('equipos.editar', equipo_id=equipo.id) }}" class="btn btn-telecom"><i class="bi bi-pencil"></i> Editar</a>
+    <a href="{{ url_for('equipos.editar', equipo_id=equipo.id) }}" class="btn btn-telecom"><i class="bi bi-pencil me-1"></i> Editar</a>
     <form method="post" action="{{ url_for('equipos.eliminar', equipo_id=equipo.id) }}"
           data-confirmar="¿Eliminar el equipo {{ equipo.codigo_activo }} y toda su hoja de vida? Esta acción no se puede deshacer.">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+      <button class="btn btn-outline-light" title="Eliminar" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
     </form>
     {% endif %}
   </div>
@@ -35,7 +38,7 @@
         <div class="row">
           <dl class="ficha row mb-0 {{ 'col-md-8' if equipo.foto else 'col-12' }}">
             <dt class="col-sm-4">Código de activo</dt><dd class="col-sm-8">{{ equipo.codigo_activo }}</dd>
-            <dt class="col-sm-4">Categoría</dt><dd class="col-sm-8">{{ equipo.categoria.nombre }} <span class="badge bg-light text-dark border">{{ equipo.categoria.grupo }}</span></dd>
+            <dt class="col-sm-4">Categoría</dt><dd class="col-sm-8">{{ equipo.categoria.nombre }} <span class="badge badge-soft">{{ equipo.categoria.grupo }}</span></dd>
             <dt class="col-sm-4">Marca / Modelo</dt><dd class="col-sm-8">{{ equipo.marca|vacio }} / {{ equipo.modelo|vacio }}</dd>
             <dt class="col-sm-4">N.º de serie</dt><dd class="col-sm-8"><code>{{ equipo.numero_serie }}</code></dd>
             <dt class="col-sm-4">Part number</dt><dd class="col-sm-8">{{ equipo.part_number|vacio }}</dd>
@@ -116,31 +119,31 @@
     <div class="card mb-3" id="mantenimientos">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-tools"></i> Historial de mantenimientos ({{ equipo.mantenimientos|length }})</span>
-        <button class="btn btn-sm btn-telecom" data-bs-toggle="modal" data-bs-target="#modalMant"><i class="bi bi-plus-lg"></i> Registrar</button>
+        <button class="btn btn-sm btn-telecom ms-auto" data-bs-toggle="modal" data-bs-target="#modalMant"><i class="bi bi-plus-lg"></i> Registrar</button>
       </div>
       <div class="table-responsive">
-        <table class="table table-sm mb-0">
-          <thead class="table-light"><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Técnico</th><th class="text-end">Costo</th><th>Próximo</th>{% if current_user.is_admin %}<th></th>{% endif %}</tr></thead>
+        <table class="table table-stack">
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Técnico</th><th class="text-end">Costo</th><th>Próximo</th>{% if current_user.is_admin %}<th></th>{% endif %}</tr></thead>
           <tbody>
           {% for m in equipo.mantenimientos %}
             <tr>
-              <td class="text-nowrap">{{ m.fecha|fecha }}</td>
-              <td><span class="badge bg-light text-dark border">{{ m.tipo }}</span></td>
-              <td>{{ m.descripcion }}</td>
-              <td>{{ m.tecnico|vacio }}</td>
-              <td class="text-end text-nowrap">{{ m.costo|moneda }}</td>
-              <td class="text-nowrap">{{ m.proxima_fecha|fecha }}</td>
+              <td data-label="Fecha" class="text-nowrap">{{ m.fecha|fecha }}</td>
+              <td data-label="Tipo"><span class="badge badge-soft">{{ m.tipo }}</span></td>
+              <td data-label="Descripción">{{ m.descripcion }}</td>
+              <td data-label="Técnico">{{ m.tecnico|vacio }}</td>
+              <td data-label="Costo" class="text-end text-nowrap">{{ m.costo|moneda }}</td>
+              <td data-label="Próximo" class="text-nowrap">{{ m.proxima_fecha|fecha }}</td>
               {% if current_user.is_admin %}
-              <td>
+              <td class="td-acciones text-end">
                 <form method="post" action="{{ url_for('equipos.eliminar_mantenimiento', mant_id=m.id) }}" data-confirmar="¿Eliminar este registro de mantenimiento?">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                  <button class="btn-action peligro" title="Eliminar" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
                 </form>
               </td>
               {% endif %}
             </tr>
           {% else %}
-            <tr><td colspan="7" class="text-muted">Sin mantenimientos registrados.</td></tr>
+            <tr><td colspan="7" class="td-vacio text-muted text-center py-4"><i class="bi bi-tools fs-4 d-block mb-1"></i>Sin mantenimientos registrados.</td></tr>
           {% endfor %}
           </tbody>
         </table>
@@ -194,7 +197,7 @@
 
 <!-- Modal registrar mantenimiento -->
 <div class="modal fade" id="modalMant" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg modal-fullscreen-sm-down modal-dialog-scrollable">
     <form method="post" action="{{ url_for('equipos.agregar_mantenimiento', equipo_id=equipo.id) }}" class="modal-content">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="modal-header">

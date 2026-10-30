@@ -1,34 +1,44 @@
 {% extends "base.html" %}
 {% block title %}{{ cfg.titulo }}{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h4 mb-0"><i class="bi {{ cfg.icono }}"></i> {{ cfg.titulo }} <span class="badge bg-secondary fs-6">{{ registros|length }}</span></h1>
-  <a href="{{ url_for('catalogos.formulario', tipo=tipo) }}" class="btn btn-telecom"><i class="bi bi-plus-lg"></i> Nuevo</a>
+<div class="page-header">
+  <h1><span class="icono-titulo"><i class="bi {{ cfg.icono }}"></i></span> {{ cfg.titulo }} <span class="badge badge-soft fs-6">{{ registros|length }}</span></h1>
+  <div class="acciones">
+    <a href="{{ url_for('catalogos.formulario', tipo=tipo) }}" class="btn btn-telecom"><i class="bi bi-plus-lg me-1"></i> Nuevo</a>
+  </div>
 </div>
+{% set filtro = {'categorias': 'categoria_id', 'ubicaciones': 'ubicacion_id', 'proveedores': 'proveedor_id'}[tipo] %}
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
+    <table class="table table-hover table-stack">
+      <thead>
         <tr>{% for c in cfg.campos %}<th>{{ c[1] }}</th>{% endfor %}<th>Equipos</th><th class="text-end">Acciones</th></tr>
       </thead>
       <tbody>
       {% for r in registros %}
         <tr>
-          {% for c in cfg.campos %}<td>{{ r[c[0]]|vacio }}</td>{% endfor %}
-          <td>
-            {% set filtro = {'categorias': 'categoria_id', 'ubicaciones': 'ubicacion_id', 'proveedores': 'proveedor_id'}[tipo] %}
-            <a href="{{ url_for('equipos.lista', **{filtro: r.id}) }}" class="badge bg-telecom text-decoration-none">{{ r.equipos|length }}</a></td>
-          <td class="text-end text-nowrap">
-            <a href="{{ url_for('catalogos.formulario', tipo=tipo, obj_id=r.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
-            <form method="post" action="{{ url_for('catalogos.eliminar', tipo=tipo, obj_id=r.id) }}" class="d-inline"
-                  data-confirmar="¿Eliminar «{{ r.nombre }}»?">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-            </form>
+          {% for c in cfg.campos %}
+            {% if loop.first %}
+            <td class="td-principal celda-titulo">{{ r[c[0]] }}</td>
+            {% else %}
+            <td data-label="{{ c[1] }}">{% if c[0] == 'grupo' %}<span class="badge badge-soft">{{ r[c[0]] }}</span>{% else %}{{ r[c[0]]|vacio }}{% endif %}</td>
+            {% endif %}
+          {% endfor %}
+          <td data-label="Equipos">
+            <a href="{{ url_for('equipos.lista', **{filtro: r.id}) }}" class="badge bg-telecom">{{ r.equipos|length }}</a></td>
+          <td class="td-acciones text-end text-nowrap">
+            <div class="d-inline-flex gap-1">
+              <a href="{{ url_for('catalogos.formulario', tipo=tipo, obj_id=r.id) }}" class="btn-action" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></a>
+              <form method="post" action="{{ url_for('catalogos.eliminar', tipo=tipo, obj_id=r.id) }}"
+                    data-confirmar="¿Eliminar «{{ r.nombre }}»?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn-action peligro" title="Eliminar" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="{{ cfg.campos|length + 2 }}" class="text-center text-muted py-4">Sin registros.</td></tr>
+        <tr><td colspan="{{ cfg.campos|length + 2 }}" class="td-vacio text-center text-muted py-5"><i class="bi bi-inbox fs-2 d-block mb-2"></i>Sin registros.</td></tr>
       {% endfor %}
       </tbody>
     </table>

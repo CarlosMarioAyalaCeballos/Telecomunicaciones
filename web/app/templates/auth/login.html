@@ -1,36 +1,61 @@
 {% extends "base.html" %}
 {% block title %}Iniciar sesión{% endblock %}
-{% block contenedor %}login-wrap{% endblock %}
+{% block contenedor %}login-page{% endblock %}
+{% block mensajes_publicos %}{% endblock %}
 {% block content %}
-<div class="card login-card shadow-lg">
-  <div class="card-body p-4 p-md-5">
-    <div class="text-center mb-4">
-      <i class="bi bi-broadcast-pin text-telecom" style="font-size: 3rem;"></i>
-      <h1 class="h4 mt-2 mb-0">Activos Fijos Telecom</h1>
-      <small class="text-muted">{{ EMPRESA }}</small>
+<section class="login-hero">
+  <div class="brand"><span class="brand-logo"><i class="bi bi-broadcast-pin"></i></span><span><strong>Activos</strong> Telecom</span></div>
+  <div>
+    <h2 class="mb-3">Control total de tus activos fijos</h2>
+    <p class="mb-4" style="max-width: 440px; color:#94a3b8">Inventario, hoja de vida y mantenimientos de tus equipos de telecomunicaciones y de cómputo, en un solo lugar.</p>
+    <div class="rasgo"><i class="bi bi-hdd-network"></i><div><strong class="text-white">Telecomunicaciones</strong><br><small>Routers, switches, OLT, radios, antenas y energía.</small></div></div>
+    <div class="rasgo"><i class="bi bi-laptop"></i><div><strong class="text-white">Cómputo y móviles</strong><br><small>Portátiles, escritorio, tablets y celulares.</small></div></div>
+    <div class="rasgo"><i class="bi bi-file-earmark-pdf"></i><div><strong class="text-white">Hoja de vida en PDF</strong><br><small>Lista para imprimir, firmar y archivar.</small></div></div>
+  </div>
+  <small style="color:#64748b">{{ EMPRESA }}</small>
+</section>
+
+<section class="login-form">
+  <div class="caja">
+    <div class="text-center mb-4 d-lg-none">
+      <span class="brand-logo mx-auto mb-2" style="width:52px;height:52px;font-size:1.5rem"><i class="bi bi-broadcast-pin"></i></span>
     </div>
+    <h1 class="h3 mb-1">Bienvenido</h1>
+    <p class="text-muted mb-4">Ingresa con tu usuario para continuar.</p>
+    {% include "_mensajes.html" %}
     <form method="post">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="mb-3">
-        <label class="form-label">Usuario</label>
+        <label class="form-label" for="username">Usuario</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-person"></i></span>
-          <input name="username" class="form-control" required autofocus value="{{ request.form.get('username', '') }}">
+          <input id="username" name="username" class="form-control" required autofocus autocomplete="username" value="{{ request.form.get('username', '') }}">
         </div>
       </div>
       <div class="mb-3">
-        <label class="form-label">Contraseña</label>
+        <label class="form-label" for="password">Contraseña</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-lock"></i></span>
-          <input name="password" type="password" class="form-control" required>
+          <input id="password" name="password" type="password" class="form-control" required autocomplete="current-password">
+          <button class="btn btn-outline-secondary" type="button" id="verClave" aria-label="Mostrar contraseña"><i class="bi bi-eye"></i></button>
         </div>
       </div>
-      <div class="form-check mb-3">
+      <div class="form-check mb-4">
         <input class="form-check-input" type="checkbox" name="recordar" id="recordar">
-        <label class="form-check-label" for="recordar">Recordarme</label>
+        <label class="form-check-label" for="recordar">Recordarme en este equipo</label>
       </div>
-      <button class="btn btn-telecom w-100 py-2"><i class="bi bi-box-arrow-in-right"></i> Ingresar</button>
+      <button class="btn btn-telecom w-100 py-2"><i class="bi bi-box-arrow-in-right me-1"></i> Ingresar</button>
     </form>
+    <p class="text-center text-muted small mt-4 mb-0 d-lg-none">{{ EMPRESA }}</p>
   </div>
-</div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.getElementById('verClave').addEventListener('click', function () {
+    const c = document.getElementById('password');
+    c.type = c.type === 'password' ? 'text' : 'password';
+    this.innerHTML = c.type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+  });
+</script>
 {% endblock %}
