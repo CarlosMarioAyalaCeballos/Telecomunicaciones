@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}Hoja de vida {{ equipo.codigo_activo }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <a href="{{ url_for('equipos.lista', grupo=equipo.categoria.grupo) }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> {{ 'Cómputo y móviles' if equipo.es_computo else 'Telecomunicaciones' }}</a>
+    <h1 class="h4 mb-1 mt-1"><i class="bi bi-file-earmark-medical"></i> Hoja de vida — {{ equipo.codigo_activo }}</h1>
+    <div class="text-muted">{{ equipo.nombre }}
+      <span class="badge bg-{{ COLOR_ESTADO[equipo.estado] }}">{{ equipo.estado }}</span>
+      <span class="badge bg-{{ COLOR_CRITICIDAD[equipo.criticidad] }}">Criticidad {{ equipo.criticidad }}</span>
+      {% if equipo.garantia_hasta %}
+        <span class="badge {{ 'bg-success' if equipo.en_garantia else 'bg-secondary' }}">Garantía {{ 'vigente' if equipo.en_garantia else 'vencida' }}</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('equipos.pdf', equipo_id=equipo.id, ver=1) }}" target="_blank" class="btn btn-outline-danger"><i class="bi bi-eye"></i> Ver PDF</a>
+    <a href="{{ url_for('equipos.pdf', equipo_id=equipo.id) }}" class="btn btn-danger"><i class="bi bi-file-earmark-pdf"></i> Descargar PDF</a>
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('equipos.editar', equipo_id=equipo.id) }}" class="btn btn-telecom"><i class="bi bi-pencil"></i> Editar</a>
+    <form method="post" action="{{ url_for('equipos.eliminar', equipo_id=equipo.id) }}"
+          data-confirmar="¿Eliminar el equipo {{ equipo.codigo_activo }} y toda su hoja de vida? Esta acción no se puede deshacer.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-upc-scan"></i> Identificación</div>
+      <div class="card-body">
+        <div class="row">
+          <dl class="ficha row mb-0 {{ 'col-md-8' if equipo.foto else 'col-12' }}">
+            <dt class="col-sm-4">Código de activo</dt><dd class="col-sm-8">{{ equipo.codigo_activo }}</dd>
+            <dt class="col-sm-4">Categoría</dt><dd class="col-sm-8">{{ equipo.categoria.nombre }} <span class="badge bg-light text-dark border">{{ equipo.categoria.grupo }}</span></dd>
+            <dt class="col-sm-4">Marca / Modelo</dt><dd class="col-sm-8">{{ equipo.marca|vacio }} / {{ equipo.modelo|vacio }}</dd>
+            <dt class="col-sm-4">N.º de serie</dt><dd class="col-sm-8"><code>{{ equipo.numero_serie }}</code></dd>
+            <dt class="col-sm-4">Part number</dt><dd class="col-sm-8">{{ equipo.part_number|vacio }}</dd>
+            <dt class="col-sm-4">Registrado</dt><dd class="col-sm-8">{{ equipo.creado_en|fecha('%d/%m/%Y %H:%M') }}{% if equipo.creado_por %} por {{ equipo.creado_por.nombre }}{% endif %}</dd>
+          </dl>
+          {% if equipo.foto %}
+          <div class="col-md-4 text-center">
+            <a href="{{ url_for('main.uploads', filename=equipo.foto) }}" target="_blank">
+              <img src="{{ url_for('main.uploads', filename=equipo.foto) }}" class="img-fluid rounded border foto-equipo" alt="Foto"></a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header"><i class="bi bi-cpu"></i> Información técnica</div>
+          <div class="card-body"><dl class="ficha row mb-0">
+            <dt class="col-5">Dirección IP</dt><dd class="col-7">{{ equipo.direccion_ip|vacio }}</dd>
+            <dt class="col-5">Dirección MAC</dt><dd class="col-7">{{ equipo.direccion_mac|vacio }}</dd>
+            <dt class="col-5">Hostname</dt><dd class="col-7">{{ equipo.hostname|vacio }}</dd>
+            <dt class="col-5">Firmware / SO</dt><dd class="col-7">{{ equipo.firmware|vacio }}</dd>
+            <dt class="col-5">Consumo</dt><dd class="col-7">{{ (equipo.consumo_energia_w ~ ' W') if equipo.consumo_energia_w is not none else '—' }}</dd>
+          </dl></div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header"><i class="bi bi-geo-alt"></i> Ubicación y responsable</div>
+          <div class="card-body"><dl class="ficha row mb-0">
+            {% set u = equipo.ubicacion %}
+            <dt class="col-5">Sitio</dt><dd class="col-7">{{ u.nombre if u else '—' }}{% if u and u.tipo %} <small class="text-muted">({{ u.tipo }})</small>{% endif %}</dd>
+            <dt class="col-5">Dirección</dt><dd class="col-7">{{ (u.direccion if u else none)|vacio }}{% if u and u.ciudad %}, {{ u.ciudad }}{% endif %}</dd>
+            <dt class="col-5">Rack / posición</dt><dd class="col-7">{{ equipo.rack_posicion|vacio }}</dd>
+            <dt class="col-5">{{ 'Asignado a' if equipo.es_computo else 'Responsable' }}</dt><dd class="col-7">{{ equipo.responsable|vacio }}</dd>
+            <dt class="col-5">Instalación</dt><dd class="col-7">{{ equipo.fecha_instalacion|fecha }}</dd>
+          </dl></div>
+        </div>
+      </div>
+    </div>
+
+    {% if equipo.es_computo %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-laptop"></i> Cómputo y dispositivo móvil</div>
+      <div class="card-body"><dl class="ficha row mb-0">
+        <dt class="col-sm-3">Procesador</dt><dd class="col-sm-3">{{ equipo.procesador|vacio }}</dd>
+        <dt class="col-sm-3">Memoria RAM</dt><dd class="col-sm-3">{{ equipo.memoria_ram|vacio }}</dd>
+        <dt class="col-sm-3">Almacenamiento</dt><dd class="col-sm-3">{{ equipo.almacenamiento|vacio }}</dd>
+        <dt class="col-sm-3">Pantalla</dt><dd class="col-sm-3">{{ equipo.pantalla|vacio }}</dd>
+        <dt class="col-sm-3">Sistema operativo</dt><dd class="col-sm-3">{{ equipo.sistema_operativo|vacio }}</dd>
+        <dt class="col-sm-3">Licencia SO</dt><dd class="col-sm-3">{{ equipo.licencia_so|vacio }}</dd>
+        <dt class="col-sm-3">IMEI</dt><dd class="col-sm-3">{{ equipo.imei|vacio }}</dd>
+        <dt class="col-sm-3">Línea / operador</dt><dd class="col-sm-3">{{ equipo.numero_linea|vacio }}{% if equipo.operador_movil %} ({{ equipo.operador_movil }}){% endif %}</dd>
+        <dt class="col-sm-3">Área / dependencia</dt><dd class="col-sm-3">{{ equipo.area|vacio }}</dd>
+        <dt class="col-sm-3">Accesorios</dt><dd class="col-sm-3">{{ equipo.accesorios|vacio }}</dd>
+        <dt class="col-sm-3">Software instalado</dt><dd class="col-sm-9" style="white-space: pre-line">{{ equipo.software_instalado|vacio }}</dd>
+      </dl></div>
+    </div>
+    {% endif %}
+
+    {% if equipo.especificaciones or equipo.observaciones %}
+    <div class="card mb-3">
+      <div class="card-body">
+        {% if equipo.especificaciones %}
+          <h6 class="seccion-form mt-0">Especificaciones técnicas</h6>
+          <p style="white-space: pre-line">{{ equipo.especificaciones }}</p>
+        {% endif %}
+        {% if equipo.observaciones %}
+          <h6 class="seccion-form">Observaciones</h6>
+          <p class="mb-0" style="white-space: pre-line">{{ equipo.observaciones }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card mb-3" id="mantenimientos">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-tools"></i> Historial de mantenimientos ({{ equipo.mantenimientos|length }})</span>
+        <button class="btn btn-sm btn-telecom" data-bs-toggle="modal" data-bs-target="#modalMant"><i class="bi bi-plus-lg"></i> Registrar</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light"><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Técnico</th><th class="text-end">Costo</th><th>Próximo</th>{% if current_user.is_admin %}<th></th>{% endif %}</tr></thead>
+          <tbody>
+          {% for m in equipo.mantenimientos %}
+            <tr>
+              <td class="text-nowrap">{{ m.fecha|fecha }}</td>
+              <td><span class="badge bg-light text-dark border">{{ m.tipo }}</span></td>
+              <td>{{ m.descripcion }}</td>
+              <td>{{ m.tecnico|vacio }}</td>
+              <td class="text-end text-nowrap">{{ m.costo|moneda }}</td>
+              <td class="text-nowrap">{{ m.proxima_fecha|fecha }}</td>
+              {% if current_user.is_admin %}
+              <td>
+                <form method="post" action="{{ url_for('equipos.eliminar_mantenimiento', mant_id=m.id) }}" data-confirmar="¿Eliminar este registro de mantenimiento?">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+              {% endif %}
+            </tr>
+          {% else %}
+            <tr><td colspan="7" class="text-muted">Sin mantenimientos registrados.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-cash-coin"></i> Adquisición y valor</div>
+      <div class="card-body"><dl class="ficha row mb-0">
+        <dt class="col-6">Proveedor</dt><dd class="col-6">{{ equipo.proveedor.nombre if equipo.proveedor else '—' }}</dd>
+        <dt class="col-6">Fecha adquisición</dt><dd class="col-6">{{ equipo.fecha_adquisicion|fecha }}</dd>
+        <dt class="col-6">Factura / OC</dt><dd class="col-6">{{ equipo.numero_factura|vacio }} / {{ equipo.orden_compra|vacio }}</dd>
+        <dt class="col-6">Garantía hasta</dt><dd class="col-6">{{ equipo.garantia_hasta|fecha }}</dd>
+        <dt class="col-6">Valor de compra</dt><dd class="col-6 fw-semibold">{{ equipo.valor_compra|moneda }}</dd>
+        <dt class="col-6">Valor residual</dt><dd class="col-6">{{ equipo.valor_residual|moneda }}</dd>
+        <dt class="col-6">Vida útil</dt><dd class="col-6">{{ (equipo.vida_util_anios ~ ' años') if equipo.vida_util_anios else '—' }}</dd>
+        <dt class="col-6">Años de uso</dt><dd class="col-6">{{ equipo.anios_uso|vacio }}</dd>
+        <dt class="col-6">Depreciación anual</dt><dd class="col-6">{{ equipo.depreciacion_anual|moneda }}</dd>
+        <dt class="col-6">Depreciación acum.</dt><dd class="col-6">{{ equipo.depreciacion_acumulada|moneda }}</dd>
+        <dt class="col-6">Valor en libros</dt><dd class="col-6 fw-bold text-telecom">{{ equipo.valor_en_libros|moneda }}</dd>
+        <dt class="col-6">Costo mantenimientos</dt><dd class="col-6">{{ equipo.costo_mantenimientos|moneda }}</dd>
+      </dl>
+      {% if equipo.depreciacion_acumulada is not none and equipo.valor_compra %}
+        {% set pct = (equipo.depreciacion_acumulada / equipo.valor_compra * 100)|round(1) %}
+        <div class="small text-muted mt-2">Depreciado: {{ pct }}%</div>
+        <div class="progress" style="height:8px"><div class="progress-bar bg-warning" style="width: {{ pct }}%"></div></div>
+      {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clock-history"></i> Historial de eventos</div>
+      <div class="card-body" style="max-height: 520px; overflow-y: auto;">
+        <div class="timeline">
+          {% for ev in equipo.historial %}
+          <div class="evento">
+            <div class="small text-muted">{{ ev.fecha|fecha('%d/%m/%Y %H:%M') }} · {{ ev.usuario.nombre if ev.usuario else 'Sistema' }}</div>
+            <div class="fw-semibold">{{ ev.accion }}</div>
+            <div class="small">{{ ev.detalle }}</div>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">Sin eventos.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal registrar mantenimiento -->
+<div class="modal fade" id="modalMant" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form method="post" action="{{ url_for('equipos.agregar_mantenimiento', equipo_id=equipo.id) }}" class="modal-content">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-tools"></i> Registrar mantenimiento — {{ equipo.codigo_activo }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-4"><label class="form-label">Fecha *</label>
+            <input type="date" name="fecha" class="form-control" required id="fechaMant"></div>
+          <div class="col-md-4"><label class="form-label">Tipo *</label>
+            <select name="tipo" class="form-select">{% for t in tipos_mant %}<option>{{ t }}</option>{% endfor %}</select></div>
+          <div class="col-md-4"><label class="form-label">Técnico</label>
+            <input name="tecnico" class="form-control" value="{{ current_user.nombre }}"></div>
+          <div class="col-12"><label class="form-label">Descripción del trabajo *</label>
+            <textarea name="descripcion" class="form-control" rows="3" required></textarea></div>
+          <div class="col-md-4"><label class="form-label">Costo ($)</label>
+            <input type="number" name="costo" min="0" step="0.01" class="form-control"></div>
+          <div class="col-md-4"><label class="form-label">Próximo mantenimiento</label>
+            <input type="date" name="proxima_fecha" class="form-control"></div>
+          <div class="col-md-4"><label class="form-label">Cambiar estado a</label>
+            <select name="nuevo_estado" class="form-select">
+              <option value="">(sin cambio — {{ equipo.estado }})</option>
+              {% for e in COLOR_ESTADO %}{% if e != equipo.estado %}<option>{{ e }}</option>{% endif %}{% endfor %}
+            </select></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-telecom"><i class="bi bi-save"></i> Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const f = document.getElementById('fechaMant');
+  if (!f.value) f.value = new Date().toLocaleDateString('sv-SE');
+</script>
+{% endblock %}

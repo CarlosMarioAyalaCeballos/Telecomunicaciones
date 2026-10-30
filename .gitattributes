@@ -1,0 +1,5 @@
+# Finales de línea LF para que funcione igual en contenedores Linux
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary

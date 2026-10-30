@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ cfg.titulo }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><i class="bi {{ cfg.icono }}"></i> {{ 'Editar' if obj.id else 'Nueva' if cfg.singular[-1] == 'a' or cfg.singular[-2:] == 'ón' else 'Nuevo' }} {{ cfg.singular }}</div>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="card-body row g-3">
+          {% for nombre, etiqueta, tipo_campo, requerido, opciones in cfg.campos %}
+          {% set valor = request.form.get(nombre) if request.method == 'POST' else obj[nombre] %}
+          <div class="{{ 'col-12' if nombre in ('nombre', 'descripcion', 'direccion') else 'col-md-6' }}">
+            <label class="form-label">{{ etiqueta }}{% if requerido %} <span class="text-danger">*</span>{% endif %}</label>
+            {% if tipo_campo == 'select' %}
+            <select name="{{ nombre }}" class="form-select">
+              <option value="">— Seleccione —</option>
+              {% for o in opciones %}<option {{ 'selected' if valor == o }}>{{ o }}</option>{% endfor %}
+            </select>
+            {% else %}
+            <input type="{{ tipo_campo }}" name="{{ nombre }}" class="form-control" value="{{ valor if valor is not none else '' }}"
+                   {{ 'required' if requerido }} {{ 'step=any' if tipo_campo == 'number' }}>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="card-footer bg-white text-end">
+          <a href="{{ url_for('catalogos.lista', tipo=tipo) }}" class="btn btn-outline-secondary">Cancelar</a>
+          <button class="btn btn-telecom"><i class="bi bi-save"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

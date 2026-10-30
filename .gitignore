@@ -1,0 +1,16 @@
+# Configuración local con contraseñas (usar .env.example como plantilla)
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Archivos subidos y bases locales
+uploads/
+*.db
+
+# Editores / sistema
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Mi perfil{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-person-circle"></i> Mi perfil</div>
+      <div class="card-body">
+        <dl class="row ficha">
+          <dt class="col-4">Usuario</dt><dd class="col-8">{{ current_user.username }}</dd>
+          <dt class="col-4">Nombre</dt><dd class="col-8">{{ current_user.nombre }}</dd>
+          <dt class="col-4">Correo</dt><dd class="col-8">{{ current_user.email|vacio }}</dd>
+          <dt class="col-4">Rol</dt><dd class="col-8">{{ current_user.rol }}</dd>
+        </dl>
+        <h6 class="seccion-form">Cambiar contraseña</h6>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-2"><label class="form-label">Contraseña actual</label>
+            <input type="password" name="actual" class="form-control" required></div>
+          <div class="mb-2"><label class="form-label">Nueva contraseña</label>
+            <input type="password" name="nueva" class="form-control" minlength="6" required></div>
+          <div class="mb-3"><label class="form-label">Confirmar nueva contraseña</label>
+            <input type="password" name="confirmar" class="form-control" minlength="6" required></div>
+          <button class="btn btn-telecom"><i class="bi bi-save"></i> Guardar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar ' ~ equipo.codigo_activo if equipo else 'Nuevo equipo' }}{% endblock %}
+
+{# Valor del campo: lo enviado (si hubo error) o lo guardado en BD #}
+{% macro v(campo, defecto='') -%}
+  {%- if form -%}{{ form.get(campo, '') }}
+  {%- elif equipo and equipo[campo] is not none -%}{{ equipo[campo] }}
+  {%- else -%}{{ defecto }}{%- endif -%}
+{%- endmacro %}
+
+{% macro campo(nombre, etiqueta, tipo='text', col='col-md-4', requerido=false, extra='') -%}
+<div class="{{ col }}">
+  <label class="form-label">{{ etiqueta }}{% if requerido %} <span class="text-danger">*</span>{% endif %}</label>
+  <input type="{{ tipo }}" name="{{ nombre }}" class="form-control" value="{{ v(nombre) }}" {{ 'required' if requerido }} {{ extra|safe }}>
+</div>
+{%- endmacro %}
+
+{% macro seleccion(nombre, etiqueta, opciones, col='col-md-4', requerido=false, vacio='— Seleccione —', defecto='') -%}
+<div class="{{ col }}">
+  <label class="form-label">{{ etiqueta }}{% if requerido %} <span class="text-danger">*</span>{% endif %}</label>
+  <select name="{{ nombre }}" class="form-select" {{ 'required' if requerido }}>
+    {% if vacio %}<option value="">{{ vacio }}</option>{% endif %}
+    {% for o in opciones %}
+      {% set valor = o.id if o.id is defined else o %}
+      <option value="{{ valor }}" {{ 'selected' if v(nombre, defecto)|string == valor|string }}>{{ o.nombre if o.nombre is defined else o }}</option>
+    {% endfor %}
+  </select>
+</div>
+{%- endmacro %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">
+    {% if equipo %}<i class="bi bi-pencil-square"></i> Editar equipo <span class="text-muted">{{ equipo.codigo_activo }}</span>
+    {% else %}<i class="bi bi-plus-square"></i> Registrar nuevo equipo{% endif %}
+  </h1>
+  <a href="{{ url_for('equipos.detalle', equipo_id=equipo.id) if equipo else url_for('equipos.lista') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="card-body">
+    <div class="seccion-form mt-0"><i class="bi bi-upc-scan"></i> Identificación</div>
+    <div class="row g-3">
+      {{ campo('codigo_activo', 'Código de activo', requerido=true, extra='placeholder="ACT-RTR-0001"') }}
+      {{ campo('nombre', 'Nombre / descripción', col='col-md-8', requerido=true) }}
+      <div class="col-md-4">
+        <label class="form-label">Categoría <span class="text-danger">*</span></label>
+        <select name="categoria_id" id="categoria" class="form-select" required>
+          <option value="">— Seleccione —</option>
+          {# El grupo desde el que se creó el equipo aparece primero #}
+          {% set orden = ([grupo_inicial] if grupo_inicial in grupos else []) + (grupos|reject('equalto', grupo_inicial)|list) %}
+          {% for g in orden %}
+          <optgroup label="{{ g }}">
+            {% for c in categorias if c.grupo == g %}
+            <option value="{{ c.id }}" data-grupo="{{ c.grupo }}" {{ 'selected' if v('categoria_id')|string == c.id|string }}>{{ c.nombre }}</option>
+            {% endfor %}
+          </optgroup>
+          {% endfor %}
+        </select>
+      </div>
+      {{ campo('marca', 'Marca') }}
+      {{ campo('modelo', 'Modelo') }}
+      {{ campo('numero_serie', 'Número de serie', requerido=true) }}
+      {{ campo('part_number', 'Part number') }}
+      {{ seleccion('estado', 'Estado', estados, col='col-md-2', vacio=none, defecto='Operativo') }}
+      {{ seleccion('criticidad', 'Criticidad', criticidades, col='col-md-2', vacio=none, defecto='Media') }}
+    </div>
+
+    <div id="seccion-computo">
+      <div class="seccion-form"><i class="bi bi-laptop"></i> Cómputo y dispositivo móvil</div>
+      <div class="row g-3">
+        {{ campo('procesador', 'Procesador', col='col-md-4', extra='placeholder="Intel Core i7-1365U"') }}
+        {{ campo('memoria_ram', 'Memoria RAM', col='col-md-2', extra='placeholder="16 GB"') }}
+        {{ campo('almacenamiento', 'Almacenamiento', col='col-md-3', extra='placeholder="512 GB SSD"') }}
+        {{ campo('pantalla', 'Pantalla', col='col-md-3', extra='placeholder="14&quot;"') }}
+        {{ campo('sistema_operativo', 'Sistema operativo', col='col-md-4', extra='placeholder="Windows 11 Pro / Android 14 / iOS 18"') }}
+        {{ campo('licencia_so', 'Licencia del SO', col='col-md-4', extra='placeholder="OEM, volumen, serial…"') }}
+        {{ campo('area', 'Área / dependencia', col='col-md-4') }}
+        {{ campo('imei', 'IMEI', col='col-md-4', extra='placeholder="Solo celulares / tablets con SIM"') }}
+        {{ campo('numero_linea', 'N.º de línea', col='col-md-4') }}
+        {{ campo('operador_movil', 'Operador móvil', col='col-md-4', extra='placeholder="Claro, Movistar, Tigo…"') }}
+        <div class="col-md-6">
+          <label class="form-label">Software instalado</label>
+          <textarea name="software_instalado" class="form-control" rows="2" placeholder="Office, antivirus, herramientas…">{{ v('software_instalado') }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Accesorios entregados</label>
+          <textarea name="accesorios" class="form-control" rows="2" placeholder="Cargador, mouse, maletín, funda…">{{ v('accesorios') }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="seccion-form"><i class="bi bi-cpu"></i> Información técnica / red</div>
+    <div class="row g-3">
+      {{ campo('direccion_ip', 'Dirección IP', col='col-md-3') }}
+      {{ campo('direccion_mac', 'Dirección MAC', col='col-md-3', extra='placeholder="00:00:00:00:00:00"') }}
+      {{ campo('hostname', 'Hostname', col='col-md-3') }}
+      {{ campo('firmware', 'Firmware', col='col-md-3') }}
+      {{ campo('consumo_energia_w', 'Consumo de energía (W)', 'number', col='col-md-3', extra='min="0"') }}
+      <div class="col-md-9">
+        <label class="form-label">Especificaciones técnicas</label>
+        <textarea name="especificaciones" class="form-control" rows="2" placeholder="Puertos, capacidad, módulos, etc.">{{ v('especificaciones') }}</textarea>
+      </div>
+    </div>
+
+    <div class="seccion-form"><i class="bi bi-geo-alt"></i> Ubicación y responsable</div>
+    <div class="row g-3">
+      {{ seleccion('ubicacion_id', 'Ubicación / sitio', ubicaciones) }}
+      {{ campo('rack_posicion', 'Rack / posición', extra='placeholder="Rack A1 / U20 (o puesto de trabajo)"') }}
+      {{ campo('responsable', 'Responsable / asignado a') }}
+      {{ campo('fecha_instalacion', 'Fecha de instalación', 'date') }}
+    </div>
+
+    <div class="seccion-form"><i class="bi bi-cash-coin"></i> Adquisición e información financiera</div>
+    <div class="row g-3">
+      {{ seleccion('proveedor_id', 'Proveedor', proveedores) }}
+      {{ campo('fecha_adquisicion', 'Fecha de adquisición', 'date') }}
+      {{ campo('garantia_hasta', 'Garantía hasta', 'date') }}
+      {{ campo('numero_factura', 'N.º de factura', col='col-md-3') }}
+      {{ campo('orden_compra', 'Orden de compra', col='col-md-3') }}
+      {{ campo('valor_compra', 'Valor de compra ($)', 'number', col='col-md-2', extra='min="0" step="0.01"') }}
+      {{ campo('valor_residual', 'Valor residual ($)', 'number', col='col-md-2', extra='min="0" step="0.01"') }}
+      {{ campo('vida_util_anios', 'Vida útil (años)', 'number', col='col-md-2', extra='min="0"') }}
+    </div>
+
+    <div class="seccion-form"><i class="bi bi-card-text"></i> Foto y observaciones</div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Foto del equipo (PNG/JPG, máx. 5 MB)</label>
+        <input type="file" name="foto" accept=".png,.jpg,.jpeg" class="form-control">
+        {% if equipo and equipo.foto %}
+        <div class="mt-2 d-flex align-items-center gap-2">
+          <img src="{{ url_for('main.uploads', filename=equipo.foto) }}" style="height:60px" class="rounded border">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="quitar_foto" id="quitar_foto" value="1">
+            <label class="form-check-label" for="quitar_foto">Quitar foto</label>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Observaciones</label>
+        <textarea name="observaciones" class="form-control" rows="3">{{ v('observaciones') }}</textarea>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer bg-white text-end">
+    <a href="{{ url_for('equipos.detalle', equipo_id=equipo.id) if equipo else url_for('equipos.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+    <button class="btn btn-telecom"><i class="bi bi-save"></i> Guardar</button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Muestra la sección de cómputo solo si la categoría pertenece a ese grupo
+  const categoria = document.getElementById('categoria');
+  const seccion = document.getElementById('seccion-computo');
+  const grupoInicial = {{ (grupo_inicial or '')|tojson }};
+  function actualizar() {
+    const opt = categoria.selectedOptions[0];
+    const grupo = opt && opt.dataset.grupo ? opt.dataset.grupo : grupoInicial;
+    seccion.style.display = grupo === 'Cómputo' ? '' : 'none';
+  }
+  categoria.addEventListener('change', actualizar);
+  actualizar();
+</script>
+{% endblock %}

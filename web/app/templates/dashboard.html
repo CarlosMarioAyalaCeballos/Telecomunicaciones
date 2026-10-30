@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Panel{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <h1 class="h4 mb-0"><i class="bi bi-speedometer2"></i> Panel de control</h1>
+  {% if current_user.is_admin %}
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('equipos.nuevo', grupo='Telecomunicaciones') }}" class="btn btn-telecom"><i class="bi bi-hdd-network"></i> Nuevo equipo telecom</a>
+    <a href="{{ url_for('equipos.nuevo', grupo='Cómputo') }}" class="btn btn-outline-primary"><i class="bi bi-laptop"></i> Nuevo equipo de cómputo</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card stat h-100"><div class="card-body">
+      <div class="text-muted small">Total de equipos</div>
+      <div class="valor">{{ total }}</div>
+      <div class="small">
+        <a href="{{ url_for('equipos.lista', grupo='Telecomunicaciones') }}" class="text-decoration-none"><i class="bi bi-hdd-network"></i> Telecom: {{ por_grupo.get('Telecomunicaciones', 0) }}</a><br>
+        <a href="{{ url_for('equipos.lista', grupo='Cómputo') }}" class="text-decoration-none"><i class="bi bi-laptop"></i> Cómputo: {{ por_grupo.get('Cómputo', 0) }}</a>
+      </div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat h-100"><div class="card-body">
+      <div class="text-muted small">Valor total de compra</div>
+      <div class="valor fs-5 mt-2">{{ valor_total|moneda }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat h-100" style="border-color:#fd7e14"><div class="card-body">
+      <div class="text-muted small">Mantenimientos próximos (30 días)</div>
+      <div class="valor">{{ proximos|length }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat h-100" style="border-color:#dc3545"><div class="card-body">
+      <div class="text-muted small">Garantías por vencer (90 días)</div>
+      <div class="valor">{{ garantias|length }}</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-activity"></i> Equipos por estado</div>
+      <div class="card-body">
+        {% for estado, n in estados %}
+        <div class="d-flex justify-content-between small mb-1">
+          <a href="{{ url_for('equipos.lista', estado=estado) }}" class="text-decoration-none">
+            <span class="badge bg-{{ COLOR_ESTADO[estado] }}">{{ estado }}</span></a>
+          <span class="fw-semibold">{{ n }}</span>
+        </div>
+        <div class="progress mb-3" style="height:6px">
+          <div class="progress-bar bg-{{ COLOR_ESTADO[estado].split()[0] }}" style="width: {{ (n / total * 100) if total else 0 }}%"></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-tags"></i> Equipos por categoría</div>
+      <div class="card-body">
+        {% for nombre, n in por_categoria %}
+        <div class="d-flex justify-content-between small mb-1"><span>{{ nombre }}</span><span class="fw-semibold">{{ n }}</span></div>
+        <div class="progress mb-3" style="height:6px">
+          <div class="progress-bar bg-telecom" style="width: {{ (n / total * 100) if total else 0 }}%"></div>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Sin equipos registrados.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-tools"></i> Mantenimientos programados</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Fecha</th><th>Equipo</th><th>Último tipo</th></tr></thead>
+          <tbody>
+          {% for m in proximos %}
+            <tr class="{{ 'table-danger' if m.proxima_fecha < hoy else '' }}">
+              <td>{{ m.proxima_fecha|fecha }}{% if m.proxima_fecha < hoy %} <span class="badge bg-danger">Vencido</span>{% endif %}</td>
+              <td><a href="{{ url_for('equipos.detalle', equipo_id=m.equipo.id) }}">{{ m.equipo.codigo_activo }}</a> — {{ m.equipo.nombre }}</td>
+              <td>{{ m.tipo }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="3" class="text-muted">No hay mantenimientos en los próximos 30 días.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-clock-history"></i> Actualizados recientemente</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Código</th><th>Equipo</th><th>Estado</th><th>Garantía</th></tr></thead>
+          <tbody>
+          {% for e in recientes %}
+            <tr>
+              <td><a href="{{ url_for('equipos.detalle', equipo_id=e.id) }}">{{ e.codigo_activo }}</a></td>
+              <td>{{ e.nombre }}</td>
+              <td><span class="badge bg-{{ COLOR_ESTADO[e.estado] }}">{{ e.estado }}</span></td>
+              <td>{{ e.garantia_hasta|fecha }}{% if e in garantias %} <i class="bi bi-exclamation-triangle-fill text-danger" title="Vence pronto"></i>{% endif %}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-muted">Sin equipos.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+:root { --telecom: #0b3d6b; --telecom-claro: #e8f0f8; }
+body { background: #f3f6f9; }
+.bg-telecom { background: var(--telecom); }
+.text-telecom { color: var(--telecom); }
+.btn-telecom { background: var(--telecom); border-color: var(--telecom); color: #fff; }
+.btn-telecom:hover { background: #082d4f; border-color: #082d4f; color: #fff; }
+
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #0b3d6b 0%, #1565a8 100%); }
+.login-card { width: 100%; max-width: 400px; border: 0; border-radius: 14px; }
+
+.card { border: 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.card-header { background: #fff; font-weight: 600; }
+.stat { border-left: 4px solid var(--telecom); }
+.stat .valor { font-size: 1.7rem; font-weight: 700; color: var(--telecom); }
+
+.ficha dt { font-size: .78rem; color: #6c7a89; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
+.ficha dd { margin-bottom: .8rem; }
+.foto-equipo { max-height: 220px; object-fit: contain; }
+.seccion-form { font-size: .85rem; font-weight: 700; text-transform: uppercase; color: var(--telecom);
+  border-bottom: 2px solid var(--telecom-claro); padding-bottom: .3rem; margin: 1.2rem 0 .8rem; }
+
+.timeline { border-left: 2px solid #d0dbe6; padding-left: 1rem; }
+.timeline .evento { position: relative; margin-bottom: 1rem; }
+.timeline .evento::before { content: ""; position: absolute; left: -1.42rem; top: .35rem; width: .7rem; height: .7rem;
+  border-radius: 50%; background: var(--telecom); }
+.table td, .table th { vertical-align: middle; }

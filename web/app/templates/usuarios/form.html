@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar usuario' if usuario else 'Nuevo usuario' }}{% endblock %}
+{% macro v(campo) -%}
+  {%- if form -%}{{ form.get(campo, '') }}{%- elif usuario and usuario[campo] is not none -%}{{ usuario[campo] }}{%- endif -%}
+{%- endmacro %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-person-gear"></i> {{ 'Editar usuario ' ~ usuario.username if usuario else 'Nuevo usuario' }}</div>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="card-body row g-3">
+          <div class="col-md-6"><label class="form-label">Usuario *</label>
+            <input name="username" class="form-control" required value="{{ v('username') }}"></div>
+          <div class="col-md-6"><label class="form-label">Nombre completo *</label>
+            <input name="nombre" class="form-control" required value="{{ v('nombre') }}"></div>
+          <div class="col-md-6"><label class="form-label">Correo</label>
+            <input name="email" type="email" class="form-control" value="{{ v('email') }}"></div>
+          <div class="col-md-6"><label class="form-label">Rol *</label>
+            <select name="rol" class="form-select">
+              {% for r in roles %}<option {{ 'selected' if (v('rol')|string or 'USER') == r }}>{{ r }}</option>{% endfor %}
+            </select></div>
+          <div class="col-md-6"><label class="form-label">{{ 'Nueva contraseña (opcional)' if usuario else 'Contraseña *' }}</label>
+            <input name="password" type="password" class="form-control" minlength="6" {{ '' if usuario else 'required' }}></div>
+          <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check form-switch">
+              {% set activo = (form.get('activo') if form else (usuario.activo if usuario else true)) %}
+              <input class="form-check-input" type="checkbox" name="activo" id="activo" value="1" {{ 'checked' if activo }}>
+              <label class="form-check-label" for="activo">Usuario activo</label>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-white text-end">
+          <a href="{{ url_for('usuarios.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+          <button class="btn btn-telecom"><i class="bi bi-save"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
