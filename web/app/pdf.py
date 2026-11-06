@@ -13,19 +13,19 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (Image, KeepTogether, Paragraph, SimpleDocTemplate,
                                 Spacer, Table, TableStyle)
 
-AZUL = colors.HexColor("#0b3d6b")
-AZUL_CLARO = colors.HexColor("#e8f0f8")
-GRIS = colors.HexColor("#b8c4d0")
+PRIMARIO = colors.HexColor("#0f766e")  # teal petróleo, igual que la web
+PRIMARIO_CLARO = colors.HexColor("#e3f1ef")
+GRIS = colors.HexColor("#c3cfcc")
 
 _base = getSampleStyleSheet()
 ESTILOS = {
-    "titulo": ParagraphStyle("titulo", parent=_base["Title"], fontSize=15, textColor=AZUL, spaceAfter=2),
+    "titulo": ParagraphStyle("titulo", parent=_base["Title"], fontSize=15, textColor=PRIMARIO, spaceAfter=2),
     "empresa": ParagraphStyle("empresa", parent=_base["Normal"], fontSize=10, alignment=TA_CENTER,
                               textColor=colors.HexColor("#444444")),
     "seccion": ParagraphStyle("seccion", parent=_base["Normal"], fontName="Helvetica-Bold", fontSize=10,
                               textColor=colors.white),
     "etiqueta": ParagraphStyle("etiqueta", parent=_base["Normal"], fontName="Helvetica-Bold", fontSize=8,
-                               textColor=AZUL, leading=10),
+                               textColor=PRIMARIO, leading=10),
     "valor": ParagraphStyle("valor", parent=_base["Normal"], fontSize=8.5, leading=11),
     "firma": ParagraphStyle("firma", parent=_base["Normal"], fontSize=8.5, alignment=TA_CENTER),
     "celda": ParagraphStyle("celda", parent=_base["Normal"], fontSize=7.5, leading=9.5),
@@ -48,7 +48,7 @@ def _t(valor):
 def _seccion(titulo, espacio_despues=0):
     t = Table([[Paragraph(titulo, ESTILOS["seccion"])]], colWidths=[ANCHO])
     t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), AZUL),
+        ("BACKGROUND", (0, 0), (-1, -1), PRIMARIO),
         ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
     ]))
     bloque = [Spacer(1, 8), t] + ([Spacer(1, espacio_despues)] if espacio_despues else [])
@@ -77,7 +77,7 @@ def _pares(pares, columnas=2):
         ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
     ]
     for c in range(0, columnas * 2, 2):
-        estilo.append(("BACKGROUND", (c, 0), (c, -1), AZUL_CLARO))
+        estilo.append(("BACKGROUND", (c, 0), (c, -1), PRIMARIO_CLARO))
     t.setStyle(TableStyle(estilo))
     return t
 
@@ -89,7 +89,7 @@ def _tabla(encabezados, filas, anchos, vacio):
     datos += [[Paragraph(_t(c), ESTILOS["celda"]) for c in fila] for fila in filas]
     t = Table(datos, colWidths=[ANCHO * a for a in anchos], repeatRows=1)
     t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), AZUL),
+        ("BACKGROUND", (0, 0), (-1, 0), PRIMARIO),
         ("GRID", (0, 0), (-1, -1), 0.4, GRIS),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f5f8fb")]),
